@@ -10,6 +10,8 @@ const S3_TRANSFORMED_IMAGE_BUCKET = process.env.transformedImageBucketName;
 const TRANSFORMED_IMAGE_CACHE_TTL = process.env.transformedImageCacheTTL;
 const MAX_IMAGE_SIZE = parseInt(process.env.maxImageSize);
 
+const SUPPORTED_FORMATS = ['auto', 'jpeg', 'webp', 'avif', 'png', 'svg', 'gif'];
+
 export const handler = async (event) => {
     // Validate if this is a GET request
     if (!event.requestContext || !event.requestContext.http || !(event.requestContext.http.method === 'GET')) return sendError(400, 'Only GET method is supported', event);
@@ -35,6 +37,7 @@ export const handler = async (event) => {
     } catch (error) {
         return sendError(500, 'Error downloading original image', error);
     }
+
     let transformedImage = Sharp(await originalImageBody, { failOn: 'none', animated: true });
     // Get image orientation to rotate if needed
     const imageMetadata = await transformedImage.metadata();
@@ -44,17 +47,21 @@ export const handler = async (event) => {
     var timingLog = 'img-download;dur=' + parseInt(performance.now() - startTime);
     startTime = performance.now();
     try {
+        const width = operationsJSON['width'] || operationsJSON['w'];
+        const height = operationsJSON['height'] || operationsJSON['h'];
+        const format = operationsJSON['format'] || operationsJSON['f'];
+        const quality = operationsJSON['quality'] || operationsJSON['q'];
         // check if resizing is requested
         var resizingOptions = {};
-        if (operationsJSON['width']) resizingOptions.width = parseInt(operationsJSON['width']);
-        if (operationsJSON['height']) resizingOptions.height = parseInt(operationsJSON['height']);
+        if (width) resizingOptions.width = parseInt(width);
+        if (height) resizingOptions.height = parseInt(height);
         if (resizingOptions) transformedImage = transformedImage.resize(resizingOptions);
         // check if rotation is needed
         if (imageMetadata.orientation) transformedImage = transformedImage.rotate();
         // check if formatting is requested
-        if (operationsJSON['format']) {
+        if (format) {
             var isLossy = false;
-            switch (operationsJSON['format']) {
+            switch (format) {
                 case 'jpeg': contentType = 'image/jpeg'; isLossy = true; break;
                 case 'gif': contentType = 'image/gif'; break;
                 case 'webp': contentType = 'image/webp'; isLossy = true; break;
@@ -62,11 +69,11 @@ export const handler = async (event) => {
                 case 'avif': contentType = 'image/avif'; isLossy = true; break;
                 default: contentType = 'image/jpeg'; isLossy = true;
             }
-            if (operationsJSON['quality'] && isLossy) {
-                transformedImage = transformedImage.toFormat(operationsJSON['format'], {
-                    quality: parseInt(operationsJSON['quality']),
+            if (quality && isLossy) {
+                transformedImage = transformedImage.toFormat(format, {
+                    quality: parseInt(quality),
                 });
-            } else transformedImage = transformedImage.toFormat(operationsJSON['format']);
+            } else transformedImage = transformedImage.toFormat(format);
         }
         transformedImage = await transformedImage.toBuffer();
     } catch (error) {

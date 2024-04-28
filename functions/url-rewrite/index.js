@@ -9,7 +9,7 @@ function handler(event) {
     if (request.querystring) {
         Object.keys(request.querystring).forEach(operation => {
             switch (operation.toLowerCase()) {
-                case 'format': 
+                case 'format' || 'f':
                     var SUPPORTED_FORMATS = ['auto', 'jpeg', 'webp', 'avif', 'png', 'svg', 'gif'];
                     if (request.querystring[operation]['value'] && SUPPORTED_FORMATS.includes(request.querystring[operation]['value'].toLowerCase())) {
                         var format = request.querystring[operation]['value'].toLowerCase(); // normalize to lowercase
@@ -26,7 +26,7 @@ function handler(event) {
                         normalizedOperations['format'] = format;
                     }
                     break;
-                case 'width':
+                case  'width' || 'w':
                     if (request.querystring[operation]['value']) {
                         var width = parseInt(request.querystring[operation]['value']);
                         if (!isNaN(width) && (width > 0)) {
@@ -35,7 +35,7 @@ function handler(event) {
                         }
                     }
                     break;
-                case 'height':
+                case 'height' || 'h':
                     if (request.querystring[operation]['value']) {
                         var height = parseInt(request.querystring[operation]['value']);
                         if (!isNaN(height) && (height > 0)) {
@@ -44,7 +44,7 @@ function handler(event) {
                         }
                     }
                     break;
-                case 'quality':
+                case 'quality' || 'q':
                     if (request.querystring[operation]['value']) {
                         var quality = parseInt(request.querystring[operation]['value']);
                         if (!isNaN(quality) && (quality > 0)) {

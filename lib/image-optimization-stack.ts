@@ -6,6 +6,7 @@ import { CfnDistribution } from "aws-cdk-lib/aws-cloudfront";
 import { Construct } from 'constructs';
 import { getOriginShieldRegion } from './origin-shield';
 import { createHash } from 'crypto';
+import {FunctionProps} from "aws-cdk-lib/aws-lambda";
 
 // Stack Parameters
 
@@ -149,7 +150,7 @@ export class ImageOptimizationStack extends Stack {
     var iamPolicyStatements = [s3ReadOriginalImagesPolicy];
 
     // Create Lambda for image processing
-    var lambdaProps = {
+    var lambdaProps: FunctionProps = {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'index.handler',
       code: lambda.Code.fromAsset('functions/image-processing'),
